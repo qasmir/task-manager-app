@@ -1,7 +1,7 @@
 ##########################################################################################
 # Stage 1: Build
 ##########################################################################################
-FROM node:14-alpine AS builder
+FROM node:23-alpine AS builder
 WORKDIR /usr/src/app
 
 # Metadata labels
@@ -19,28 +19,38 @@ RUN npm install -g webpack webpack-cli dotenv-webpack
 # Copy the rest of the application code and build it
 COPY node/ .
 COPY node/.env ./
+COPY public/ ./public/
 RUN npm run build
+
+# Copy the built application to a build directory
+RUN mkdir -p build                      && \
+    cp -pr dist/*       ./build/        && \
+    cp -pr node_modules ./build/        && \
+    cp -pr public       ./build/
 
 ##########################################################################################
 # Stage 2: Runtime
 ##########################################################################################
-FROM node:14-alpine
+FROM node:23-alpine
 WORKDIR /usr/src/app
 
 # Metadata labels
 LABEL maintainer="MIRLabs <no-reply@github.com>"
-LABEL version="1.0.0"
+LABEL version="1.0.1"
 LABEL description="A simple task manager application built with Node.js, Express, and MongoDB."
 
-# Copy the built application from the builder stage
-COPY --from=builder /usr/src/app/dist ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+# Create a non-root user and switch to it
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
-# Copy static files
-COPY public ./public
+# Copy the built application from the builder stage
+COPY --from=builder /usr/src/app/build ./
 
 # Expose the application port
 EXPOSE 3000
 
-# Command to run the application
-CMD ["node", "app.bundle.js"]
+# Set the entrypoint to the node executable
+ENTRYPOINT ["node"]
+
+# Default command to run the application
+CMD ["app.bundle.js"]
