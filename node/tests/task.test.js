@@ -1,18 +1,30 @@
 const request = require('supertest');
+const mongoose = require('mongoose');
+const { connectMockDB, disconnectMockDB } = require('../configs/db-mock');
 const app = require('../app');
 const Task = require('../models/task');
 
-describe('Task API', () => {
-  beforeEach(async () => {
-    await Task.deleteMany({});
-  });
+jest.setTimeout(120000); // Increase the timeout to 120 seconds
 
+beforeAll(async () => {
+  await connectMockDB();
+});
+
+afterAll(async () => {
+  await disconnectMockDB();
+});
+
+beforeEach(async () => {
+  await Task.deleteMany({});
+});
+
+describe('Task API', () => {
   it('should create a new task', async () => {
     const res = await request(app)
       .post('/tasks')
       .send({
         title: 'Test Task',
-        description: 'Test Description'
+        description: 'Test Description',
       });
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('_id');
@@ -23,7 +35,7 @@ describe('Task API', () => {
   it('should get all tasks', async () => {
     const tasks = [
       { title: 'Task 1', description: 'Description 1' },
-      { title: 'Task 2', description: 'Description 2' }
+      { title: 'Task 2', description: 'Description 2' },
     ];
     await Task.insertMany(tasks);
 

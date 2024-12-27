@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'mirlabs/task-manager-app:1.0.0'
+        DOCKER_IMAGE = 'mirlabs/task-manager-app'
+        //DOCKER_TAG = "${env.BUILD_ID}"
+        DOCKER_TAG = 'latest'
         DOCKER_REGISTRY = 'your-docker-registry'
         DOCKER_CREDENTIALS_ID = 'docker-credentials-id'
     }
@@ -12,17 +14,21 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image
-                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
                 }
             }
         }
-
+        
+        '''
+        // Placeholder Stage for running unit tests
         stage('Test') {
             steps {
-                // Here you can add your test commands, e.g., running unit tests
-                sh 'echo "Running tests..."'
+                script {
+                    // Run unit tests
+                    // Placeholder for running unit tests
             }
         }
+        '''
 
         stage('Publish') {
             steps {
@@ -33,7 +39,7 @@ pipeline {
                     }
                     
                     // Push the Docker image
-                    sh 'docker push ${DOCKER_IMAGE}'
+                    sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
                 }
             }
         }
